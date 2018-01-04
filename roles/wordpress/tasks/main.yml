@@ -54,9 +54,9 @@
   become: true
 
 - file:
-    path: ~/Scripts/wordpress-install.sh
+    path: ~/7digital/wordpress-install.sh
     mode: 0755
 
 - name: Copy and Execute the script 
-  script: ~/Scripts/wordpress-install.sh
+  script: ~/7digital/wordpress-install.sh
 
