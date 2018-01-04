@@ -15,4 +15,4 @@ define('WP_DEBUG_DISPLAY', true);
 define('WP_MEMORY_LIMIT', '256M');
 PHP
 wp --allow-root core install --path=$WP_NAME --url=$BASE_URL --title=$WP_NAME --admin_user=test --admin_email=test@localhost.com
-wp --allow-root post create ~/Scripts/mypost --post_title='Samplepost' --post_status=publish
+wp --allow-root post create ~/7digital/mypost --post_title='Samplepost' --post_status=publish
