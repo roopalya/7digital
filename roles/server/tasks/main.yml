@@ -1,0 +1,20 @@
+---
+- name: Install required software
+  apt: name={{ item }} state=present
+  become: true
+  with_items:
+    - apache2
+    - php-mysql
+    - php
+    - libapache2-mod-php
+    - php-mcrypt
+    - python-mysqldb
+    - mysql-server
+
+- name: Install php extensions
+  apt: name={{ item }} state=present
+  become: true
+  with_items:
+    - php-gd 
+    - php-ssh2
+

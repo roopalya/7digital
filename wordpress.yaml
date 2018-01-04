@@ -1,0 +1,138 @@
+---
+Description: AWS Cloudformation template to create WordPress Site.
+Parameters:
+  Organisation:
+    Description: Name for the Organisation
+    Type: String
+    Default: 7digital
+  envType:
+    Description: Environment for the Stack
+    Type: String
+    Default: dev
+  KeyName:
+    Description: Name of an existing EC2 KeyPair
+    Type: String
+    Default: wordpress
+  ImageId:
+    Description: Image ID
+    Type: String
+    Default: ami-aa2ea6d0
+  Subnets:
+    Description: Subnets
+    Type: List<AWS::EC2::Subnet::Id>
+    Default: "subnet-a52171ee,subnet-788a0057"
+  VpcId:
+    Description: VPC ID
+    Type: String
+    Default: vpc-7df9d605
+  InstanceType:
+    Description: The Instance Type
+    Type: String
+    Default: t2.micro
+  AnsibleCodeS3Bucket:
+    Description: 'Name of the bucket for Ansible code'
+    Type: String
+    Default: 7digital-content
+  MinSize:
+    Description: Resource Type to be provisioned
+    Type: Number
+    Default: 1
+  MaxSize:
+    Description: Resource Type to be provisioned
+    Type: Number
+    Default: 1
+Resources:
+  WordPressLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: 'True'
+      KeyName: !Ref KeyName
+      ImageId: !Ref ImageId
+      SecurityGroups: 
+      - !Ref WordPressSecurityGroup
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref WordPressInstanceProfile
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            exec > >(tee /var/log/bootstrap.log) 2>&1
+            export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin/
+            REGION=${AWS::Region}
+            STACK_NAME=${AWS::StackName}
+            S3_ANSIBLE_CODE=${AnsibleCodeS3Bucket}
+            ENVIRONMENT=${envType}
+            EC2_INSTANCE_NAME=${Organisation}-${envType}-WordPress
+            export S3_ANSIBLE_CODE ENVIRONMENT EC2_INSTANCE_NAME
+            apt-get update && apt-get install awscli -y
+            apt-get install ansible -y
+            mkdir ~/Scripts/
+            export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin/:~/Scripts
+            aws s3 sync s3://7digital-content/ /root/Scripts/ --region eu-west-2
+            cd ~/Scripts/
+            ansible-playbook wordpress.yml
+  WordPressAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: !Ref Subnets
+      LaunchConfigurationName: !Ref WordPressLaunchConfig
+      MinSize: !Ref MinSize
+      MaxSize: !Ref MaxSize
+      Tags:
+      - Key: Name
+        Value: !Sub ${Organisation}-${envType}-WordPress
+        PropagateAtLaunch: true
+      - Key: Type
+        Value: Public
+        PropagateAtLaunch: true
+      - Key: Organisation
+        Value: !Ref Organisation
+        PropagateAtLaunch: true
+      - Key: Environment
+        Value: !Ref envType
+        PropagateAtLaunch: true
+  WordPressIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: Ec2ReadS3Code
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action:
+            - s3:GetObject
+            - s3:ListBucket
+            Sid: Ec2ReadS3Code
+            Resource: 
+            - !Sub arn:aws:s3:::${AnsibleCodeS3Bucket}/*
+            - !Sub arn:aws:s3:::${AnsibleCodeS3Bucket}
+            Effect: Allow
+  WordPressInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: WordPressIAMRole
+  WordPressSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${Organisation}-${envType}-WordPressSecurityGroup
+      VpcId: !Ref VpcId
+      Tags:
+      - Key: Name
+        Value: !Sub ${Organisation}-${envType}-WordPressSecurityGroup
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        CidrIp: 0.0.0.0/0
+        FromPort: '80'
+        ToPort: '80'

@@ -1,0 +1,42 @@
+[
+  {
+    "ParameterKey": "Organisation",
+    "ParameterValue": "7digital"
+  },
+  {
+    "ParameterKey": "envType",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "wordpress"
+  },
+  {
+    "ParameterKey": "ImageId",
+    "ParameterValue": "ami-aa2ea6d0"
+  },
+  {
+    "ParameterKey": "Subnets",
+    "ParameterValue": "subnet-a52171ee,subnet-788a0057"
+  },
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": "vpc-7df9d605"
+  },
+  {
+    "ParameterKey": "InstanceType",
+    "ParameterValue": "t2.micro"
+  },
+  {
+    "ParameterKey": "AnsibleCodeS3Bucket",
+    "ParameterValue": "7digital-content"
+  },
+  {
+    "ParameterKey": "MinSize",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "MaxSize",
+    "ParameterValue": "1"
+  }
+]
