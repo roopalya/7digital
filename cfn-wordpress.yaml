@@ -4,7 +4,7 @@ Parameters:
   Organisation:
     Description: Name for the Organisation
     Type: String
-    Default: 7digital
+    Default: TestOrg
   envType:
     Description: Environment for the Stack
     Type: String
